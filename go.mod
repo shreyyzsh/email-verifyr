@@ -1,3 +1,3 @@
-module github.com/shreyyzsh/email-verify.git
+module github.com/shreyyzsh/email-verifyr
 
 go 1.27.1
