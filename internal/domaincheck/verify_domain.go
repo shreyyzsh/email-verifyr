@@ -7,29 +7,28 @@ import (
 )
 
 type DomainCheckResult struct {
-	domain string
-	hasMX bool
-	mxRecord []string
-	hasSPF bool
-	spfRecord string
-	hasDMARC bool
-	dmarcRecord string
-	isValid bool
+	HasMX bool
+	MXRecord []string
+	HasSPF bool
+	SPFRecord string
+	HasDMARC bool
+	DMARCRecord string
+	IsValid bool
 }
 
 func CheckDomain(domain string) DomainCheckResult {
 
-	var result DomainCheckResult
+	result := DomainCheckResult{}
 	//MX, SPF, DMARC lookup 
 
 	mxRecords, err := net.LookupMX(domain)
 	if err!=nil {
 		log.Printf("MX lookup failed: %v\n", err)
 	} else if len(mxRecords) > 0 {
-		result.hasMX = true
+		result.HasMX = true
 		for _, record := range mxRecords {
-			result.mxRecord = append(
-				result.mxRecord, 
+			result.MXRecord = append(
+				result.MXRecord, 
 				strings.TrimSuffix(record.Host, "."),
 			)
 		}
@@ -41,8 +40,8 @@ func CheckDomain(domain string) DomainCheckResult {
 	} 
 	for _, record := range txtRecords {
 		if strings.HasPrefix(record, "v=spf1") {
-			result.hasSPF = true
-			result.spfRecord = record
+			result.HasSPF = true
+			result.SPFRecord = record
 			break
 		}
 	}
@@ -53,16 +52,16 @@ func CheckDomain(domain string) DomainCheckResult {
 	}
 	for _, record := range dmarcRecords {
 		if strings.HasPrefix(record, "v=DMARC1") {
-			result.hasDMARC = true
-			result.dmarcRecord = record
+			result.HasDMARC = true
+			result.DMARCRecord = record
 			break
 		}
 	}
 
-	if result.hasMX == true {
-		result.isValid = true
+	if result.HasMX == true {
+		result.IsValid = true
 	} else {
-		result.isValid = false
+		result.IsValid = false
 	}
 
 	return result
