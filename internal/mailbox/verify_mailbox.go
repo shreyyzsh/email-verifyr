@@ -6,9 +6,23 @@ import (
 	"net/smtp"
 	"strings"
 	"time"
+	"net/textproto"
 )
 
-func checkSMTP(mxHosts []string) error {
+func VerifyMailbox(
+	mxHosts []string,
+	sender stringm
+	recipient string,
+	) (MailboxStatus, error) {
+	
+	type MailboxStatus string
+
+	const (
+		MailboxAccepted MailboxStatus = "accepted"
+		MailboxRejected MailboxStatus = "rejected"
+		MailboxUnknown MailboxStatus = "unknown"
+	)
+
 	if len(mxHosts) == 0 {
 		return fmt.Errorf("no MX hosts provided")
 	}
@@ -68,10 +82,42 @@ func checkSMTP(mxHosts []string) error {
 			continue
 		}
 
-		// handshake succeeded 
-		_ = client.Quit()
+		// handshake succeeded, 
+		// specify sender
+		err = client.Mail(sender)
+		if err != nil {
+			lastErr = fmt.Errorf(
+				"%s: MAIL FROM failed: %w", 
+				host, err,
+			)
+
+			client.Close()
+			conn.Close()
+			continue
+		}
+
+		// checking recipient
+		err = client.Rcpt(recipient)
+		if err == nil {
+			client.Close()
+			conn.Close()
+			return MailboxAccepted, nil
+		}
+
+/* 		if smtpErr, ok := err.(*textproto.Error); ok {
+			switch smtpErr.Code {
+			case 550, 551, 553:
+			}
+		} */
+
+		lastErr = fmt.Errorf(
+			"%s: RCPT TO failed: %w",
+			host, err,
+		)
+
+		client.Close()
 		conn.Close()
-		return nil
+		continue
 	}
 
 	if lastErr == nil {
