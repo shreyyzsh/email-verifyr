@@ -1,4 +1,4 @@
-package mailbox
+package verify
 
 import (
 	"fmt"
@@ -9,29 +9,30 @@ import (
 	"net/textproto"
 )
 
+type MailboxStatus string
+
+const (
+	MailboxAccepted MailboxStatus = "accepted"
+	MailboxRejected MailboxStatus = "rejected"
+	MailboxUnknown MailboxStatus = "unknown"
+)
+
 func VerifyMailbox(
 	mxHosts []string,
-	sender stringm
+	sender string,
 	recipient string,
 	) (MailboxStatus, error) {
-	
-	type MailboxStatus string
-
-	const (
-		MailboxAccepted MailboxStatus = "accepted"
-		MailboxRejected MailboxStatus = "rejected"
-		MailboxUnknown MailboxStatus = "unknown"
-	)
 
 	if len(mxHosts) == 0 {
-		return fmt.Errorf("no MX hosts provided")
+		return MailboxUnknown, fmt.Errorf("no MX hosts provided")
 	}
 
+	permanentRejections := 0
 	var lastErr error 
 
 	for _, mxHost := range mxHosts {
 		host := strings.TrimSuffix(
-			strings.TrimSuffix(mxHost),
+			mxHost,
 			".",
 		)
 		
@@ -104,29 +105,29 @@ func VerifyMailbox(
 			return MailboxAccepted, nil
 		}
 
-/* 		if smtpErr, ok := err.(*textproto.Error); ok {
+		lastErr = err
+
+ 		if smtpErr, ok := err.(*textproto.Error); ok {
 			switch smtpErr.Code {
 			case 550, 551, 553:
+				permanentRejections++
 			}
-		} */
-
-		lastErr = fmt.Errorf(
-			"%s: RCPT TO failed: %w",
-			host, err,
-		)
+		}
 
 		client.Close()
 		conn.Close()
-		continue
 	}
 
-	if lastErr == nil {
-		return fmt.Errorf("no usable MX hostnames provided")
+	if permanentRejections == len(mxHosts) {
+		return MailboxRejected, nil
 	}
 
-	return fmt.Errorf(
-		"all MX servers failed: %w",
-		lastErr,
-	)
+	if lastErr != nil {
+		return MailboxUnknown, fmt.Errorf(
+			"mailbox could not be verified: %w", lastErr,
+		)
+	}
+
+	return MailboxUnknown, nil
 }
 
