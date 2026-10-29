@@ -1,4 +1,4 @@
-package domaincheck
+package domain
 
 import (
 	"log"
@@ -16,7 +16,7 @@ type DomainCheckResult struct {
 	IsValid bool
 }
 
-func CheckDomain(domain string) DomainCheckResult {
+func DomainCheck(domain string) DomainCheckResult {
 
 	result := DomainCheckResult{}
 	//MX, SPF, DMARC lookup 

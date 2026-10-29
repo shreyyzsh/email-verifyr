@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/shreyyzsh/email-verifyr.git/internal/domaincheck"
+	"github.com/shreyyzsh/email-verifyr.git/internal/domain"
 )
 
 func main() {
@@ -26,23 +26,12 @@ func main() {
 			continue
 		}
 
-		res_domain := domaincheck.CheckDomain(parts[1])
+		res_domain := domain.DomainCheck(parts[1])
 		if res_domain.IsValid == true {
-			fmt.Printf("\nDomain is Valid.")
+			fmt.Printf("\nDomain is Valid.\n")
 			break
 		}
 	}
-
-/* 	fmt.Printf("Fetch records? [y/n]")
-	for scanner.Scan() {
-		inp := scanner.Text()
-
-		if inp == "y" {
-			fmt.Printf("hasMX: %v\nhasSPF: %v\nhasDMARC: %v\n\nMXRecords: %v\nSPFRecords: %v\nDMARCRecords: %v", res_domain.HasMX, res_domain.HasSPF, res_domain.HasDMARC, res_domain.MXRecord, res_domain.SPFRecord, res_domain.DMARCRecord)
-		} else {
-			break
-		}
-	} */
 
 	if err := scanner.Err(); err!=nil {
 		log.Fatal("Error: could not read from input: %v\n", err)
